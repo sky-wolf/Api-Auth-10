@@ -4,7 +4,7 @@ namespace Api.Dtos
 {
     public class CreateDto
     {
-        public bool? Organisator { get; set; }
+        public bool? Organisatör { get; set; }
         public string? Name { get; set; }
 
         [EmailAddress]

@@ -1,6 +1,7 @@
 ﻿using Api.Data;
 using Api.Dtos;
 using Api.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,15 +16,15 @@ namespace Api.Services
             _context = context;
         }
 
-        public async Task<ResponseDto> AddAsync(CreateDto dto)
+        public async Task<ResponseDto> AddAsync(CreateDto? dto)
         {
             try
             {
-                CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+                CreatePasswordHash(dto!.Password!, out byte[] passwordHash, out byte[] passwordSalt);
 
                 ApplicationUser user = new ApplicationUser()
                 {
-                    Email = dto.Email.ToLower(),
+                    Email = dto.Email!.ToLower(),
                     Name = dto.Name,
                     PasswordHash = passwordHash,
                     PasswordSalt = passwordSalt
@@ -32,11 +33,25 @@ namespace Api.Services
                 var result = await _context.ApplicationUsers.AddAsync(user);
                 await _context.SaveChangesAsync();
 
+                //Roles
+
+                string Orgisation = (bool)dto.Organisatör! ? "organisator" : "user";
+                //.Include(SystemRoles => SystemRoles.RoleId)
+                var roleCheck = await _context.SystemRoles.FirstOrDefaultAsync(r => r.Name == Orgisation);
+
+                if (roleCheck != null) 
+                {
+                    await _context.UserRoles.AddAsync(new UserRole()
+                    {
+                        UserId = result.Entity.Id,
+                        RoleId = roleCheck.Id!.Value
+                    });
+                    await _context.SaveChangesAsync();
+                }
 
 
                 return new ResponseDto()
                 {
-                    ResultData = user,
                     Success = true,
                     Message = "User created successfully"
                 };
@@ -51,27 +66,53 @@ namespace Api.Services
             }
         }
 
+        public async Task<ApplicationUser> FindByEmail(string email)
+        {
+            try
+            {
+                var exist = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.Email == email.ToString());
+
+
+                return exist!;
+
+            }
+            catch
+            {
+                return new ApplicationUser();
+
+            }
+            return new ApplicationUser();
+
+        }
+
         public async Task<bool> LoginAsync(LoginDto? loginDto)
         {
             //throw new NotImplementedException();
 
-            ApplicationUser exist = await _context.ApplicationUsers.FindAsync(loginDto.Email.ToLower());
+            ApplicationUser? exist = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.Email == loginDto!.Email);
 
             if (exist != null) 
             {
-                if(VerifyPassword(loginDto.Password, exist.PasswordHash!, exist.PasswordSalt!))
+                if(VerifyPassword(loginDto?.Password!, exist.PasswordHash!, exist.PasswordSalt!))
                 {
                     List<string> roles = new List<string>();
 
                     var getUserRoles = await _context.UserRoles.FindAsync(exist.Id);
 
                     //foreach (var role in getUserRoles) {
-
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
 
-                return true;
+                
             }
-            return false;
+            else
+            {
+                return false;
+            }
         }
 
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -85,14 +126,12 @@ namespace Api.Services
 
         private bool VerifyPassword(string password, byte[] passwordHash, byte[] passwordSalt)
         {
-            using (HMACSHA512 hmac = new HMACSHA512(passwordHash))
+            using (HMACSHA512 hmac = new HMACSHA512(passwordSalt))
             {
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != passwordHash[i]) return false;
-                }
-                return true;
+                var computedHash = hmac.
+                    ComputeHash(Encoding.UTF8.GetBytes(password));
+                
+                return computedHash.SequenceEqual(passwordHash);
             }
         }
     }
