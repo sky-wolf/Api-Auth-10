@@ -9,6 +9,7 @@ namespace Api.Data
         public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
         public DbSet<SystemRoles> SystemRoles => Set<SystemRoles>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
+        public DbSet<Hash> Hashes => Set<Hash>();
 
         public APIDbContext(DbContextOptions<APIDbContext> options) : base(options)
         {
@@ -30,6 +31,19 @@ namespace Api.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<SystemRoles>().HasData(SystemRolles());
+            modelBuilder.Entity<Hash>().HasKey(r => r.Id);
+            modelBuilder.Entity<Hash>().HasIndex(h => h.UserId).IsUnique();
+            modelBuilder.Entity<Hash>().HasOne<ApplicationUser>()
+                .WithOne()
+                .HasForeignKey<Hash>(h => h.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefreshToken>().HasKey(r => r.Id);
+            modelBuilder.Entity<RefreshToken>().HasIndex(h => h.UserId).IsUnique();
+            modelBuilder.Entity<RefreshToken>().HasOne<ApplicationUser>()
+                .WithOne()
+                .HasForeignKey<RefreshToken>(h => h.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
 

@@ -1,4 +1,5 @@
 using Api.Data;
+using Api.Helpers;
 using Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -17,7 +18,10 @@ builder.Services.AddDbContext<APIDbContext>(option =>
 });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<jwtOptions>();
 
+var JwtOptions = builder.Configuration.GetSection("Jwt");
 
 var app = builder.Build();
 

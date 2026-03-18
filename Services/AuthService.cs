@@ -26,11 +26,19 @@ namespace Api.Services
                 {
                     Email = dto.Email!.ToLower(),
                     Name = dto.Name,
+                };
+
+                var result = await _context.ApplicationUsers.AddAsync(user);
+                await _context.SaveChangesAsync();
+
+                Hash hash = new Hash()
+                {
+                    UserId = result.Entity.Id,
                     PasswordHash = passwordHash,
                     PasswordSalt = passwordSalt
                 };
 
-                var result = await _context.ApplicationUsers.AddAsync(user);
+                await _context.Hashes.AddAsync(hash);
                 await _context.SaveChangesAsync();
 
                 //Roles
@@ -90,10 +98,11 @@ namespace Api.Services
             //throw new NotImplementedException();
 
             ApplicationUser? exist = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.Email == loginDto!.Email);
+            Hash? hash = await _context.Hashes.FirstOrDefaultAsync(h => h.UserId == exist!.Id);
 
             if (exist != null) 
             {
-                if(VerifyPassword(loginDto?.Password!, exist.PasswordHash!, exist.PasswordSalt!))
+                if(VerifyPassword(loginDto?.Password!, hash.PasswordHash!, hash.PasswordSalt!))
                 {
                     List<string> roles = new List<string>();
 
