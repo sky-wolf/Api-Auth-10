@@ -7,6 +7,6 @@ namespace Api.Services
     {
         public Task<ResponseDto> AddAsync(CreateDto dto);
         public Task<ApplicationUser> FindByEmail(string email);
-        public Task<bool> LoginAsync(LoginDto loginDto);
+        public Task<LoginResponseDto> LoginAsync(LoginDto loginDto);
     }
 }

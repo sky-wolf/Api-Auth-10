@@ -12,10 +12,12 @@ namespace Api.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ITokenService _tokenService;
 
-        public AccountController(IAuthService authService)
+        public AccountController(IAuthService authService, ITokenService tokenService)
         {
             _authService = authService;
+            _tokenService = tokenService;
         }
 
         [HttpPost("register")]
@@ -29,18 +31,21 @@ namespace Api.Controllers
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Login))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseDto))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ResponseDto> Login([FromBody] LoginDto login)
         {
-            await _authService.LoginAsync(login);
+            LoginResponseDto? user = await _authService.LoginAsync(login);
 
-            return new()
+
+            var results = new ResponseDto()
             {
                 Success = true,
-                Message = "Login successful"
+                ResultData = user,
             };
+
+            return results;
         }
 
         [HttpGet("profile")]
@@ -67,7 +72,7 @@ namespace Api.Controllers
         }
    
         [HttpPost("token/refresh")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponseDto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseDto))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Refresh([FromBody] TokenDto model)

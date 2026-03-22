@@ -1,6 +1,7 @@
 ﻿using Api.Data;
 using Api.Dtos;
 using Api.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,10 +11,12 @@ namespace Api.Services
     public class AuthService/*(APIDbContext context) */: IAuthService
     {
         private readonly APIDbContext _context;
+        private readonly ITokenService _tokenService;
 
-        public AuthService(APIDbContext context)
+        public AuthService(APIDbContext context, ITokenService tokenService)
         {
             _context = context;
+            _tokenService = tokenService;
         }
 
         public async Task<ResponseDto> AddAsync(CreateDto? dto)
@@ -43,7 +46,7 @@ namespace Api.Services
 
                 //Roles
 
-                string Orgisation = (bool)dto.Organisatör! ? "organisator" : "user";
+                string Orgisation = (bool)dto.Organisatör! ? "organisatör" : "user";
                 //.Include(SystemRoles => SystemRoles.RoleId)
                 var roleCheck = await _context.SystemRoles.FirstOrDefaultAsync(r => r.Name == Orgisation);
 
@@ -89,39 +92,45 @@ namespace Api.Services
                 return new ApplicationUser();
 
             }
-            return new ApplicationUser();
+
 
         }
 
-        public async Task<bool> LoginAsync(LoginDto? loginDto)
+        public async Task<LoginResponseDto> LoginAsync(LoginDto? loginDto)
         {
-            //throw new NotImplementedException();
+            var result = new LoginResponseDto();
 
             ApplicationUser? exist = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.Email == loginDto!.Email);
             Hash? hash = await _context.Hashes.FirstOrDefaultAsync(h => h.UserId == exist!.Id);
 
             if (exist != null) 
             {
-                if(VerifyPassword(loginDto?.Password!, hash.PasswordHash!, hash.PasswordSalt!))
+                if(VerifyPassword(loginDto?.Password!, hash!.PasswordHash!, hash.PasswordSalt!))
                 {
                     List<string> roles = new List<string>();
 
-                    var getUserRoles = await _context.UserRoles.FindAsync(exist.Id);
+                    var getUserRoles = await _context?.UserRoles.Where(r => r.UserId == exist.Id).ToListAsync();
 
-                    //foreach (var role in getUserRoles) {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                     if (getUserRoles != null)
+                     {
+                        foreach (var role in getUserRoles)
+                        {
+                            var roleName = await _context.SystemRoles.FindAsync(role.RoleId);
+                            if (roleName != null)
+                            {
+                                roles.Add(roleName.Name!);
+                            }
+                        }
+                     }
+                    
+                      result = _tokenService.Token(exist);
+                      
 
-                
+                    return result;
+                }
+                return null;
             }
-            else
-            {
-                return false;
-            }
+            return null;
         }
 
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)

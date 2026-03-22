@@ -1,4 +1,5 @@
 ﻿using Api.Data;
+using Api.Dtos;
 using Api.Models;
 
 namespace Api.Services
@@ -6,8 +7,8 @@ namespace Api.Services
     public interface ITokenService
     {
        
-        public string Token();
-        public string GenerateAccessToken(ApplicationUser user, List<string> roles);
+        public LoginResponseDto Token(ApplicationUser user);
+        public string GenerateAccessToken(ApplicationUser user);
         public string GenerateRefreshToken();
     }
 }
