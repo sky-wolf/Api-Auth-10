@@ -51,9 +51,9 @@ namespace Api.Data
         {
             List<SystemRoles> roles =
             [
-                new SystemRoles { Name = "administrator", Kode = 1800, Id = Guid.Parse( "08beacc0-38dd-42a9-82c1-c3706a0cf19e") },
-                new SystemRoles { Name = "organisatör", Kode = 1880, Id =  Guid.Parse( "6ac343b0-00ef-4a1c-8f64-68daaca77b5b" ) },
-                new SystemRoles { Name = "user", Kode = 1900, Id =  Guid.Parse( "941fe147-6f5a-44bd-8c9a-6cf255b57c02" )},
+                new SystemRoles { Name = "administrator", Kode = "1800", Id = Guid.Parse( "08beacc0-38dd-42a9-82c1-c3706a0cf19e") },
+                new SystemRoles { Name = "organisatör", Kode = "1880", Id =  Guid.Parse( "6ac343b0-00ef-4a1c-8f64-68daaca77b5b" ) },
+                new SystemRoles { Name = "user", Kode = "1900", Id =  Guid.Parse( "941fe147-6f5a-44bd-8c9a-6cf255b57c02" )},
             ];
 
             return roles;

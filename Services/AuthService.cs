@@ -49,13 +49,14 @@ namespace Api.Services
                 string Orgisation = (bool)dto.Organisatör! ? "organisatör" : "user";
                 //.Include(SystemRoles => SystemRoles.RoleId)
                 var roleCheck = await _context.SystemRoles.FirstOrDefaultAsync(r => r.Name == Orgisation);
-
+                
                 if (roleCheck != null) 
                 {
+                    
                     await _context.UserRoles.AddAsync(new UserRole()
                     {
                         UserId = result.Entity.Id,
-                        RoleId = roleCheck.Id!.Value
+                        RoleId = roleCheck.Id!.Value,
                     });
                     await _context.SaveChangesAsync();
                 }
@@ -110,15 +111,16 @@ namespace Api.Services
                     List<string> roles = new List<string>();
 
                     var getUserRoles = await _context?.UserRoles.Where(r => r.UserId == exist.Id).ToListAsync();
-
+                    
                      if (getUserRoles != null)
                      {
                         foreach (var role in getUserRoles)
                         {
-                            var roleName = await _context.SystemRoles.FindAsync(role.RoleId);
+                            //net to ficks 
+                            var roleName = await _context.SystemRoles.Where(r => r.Id == role.RoleId);
                             if (roleName != null)
                             {
-                                roles.Add(roleName.Name!);
+                                roles.Add(roleName.Kode!);
                             }
                         }
                      }

@@ -49,7 +49,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("profile")]
-        //[Authorize(Roles = "organisator")]
+        [Authorize()]//Roles = "organisator"
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseDto))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

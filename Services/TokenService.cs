@@ -23,27 +23,27 @@ namespace Api.Services
         public string GenerateAccessToken(ApplicationUser user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            
+
             var key = System.Text.Encoding.UTF8.GetBytes(_jwtOptions.Key);
             var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature);
 
             var getUserRoles = _context.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
 
-            var claimsList = new List<System.Security.Claims.Claim>
+            var claimsList = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name ?? ""),
+                //new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                //new Claim(ClaimTypes.Name, user.Name ?? ""),
                 new Claim(ClaimTypes.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.Role, string.Join(",", getUserRoles))
             };
 
             var tokenDescriptor = new JwtSecurityToken
-                ( 
+                (
                     issuer: _jwtOptions.Issuer,
                     audience: _jwtOptions.Audience,
                     claims: claimsList,
                     expires: DateTime.Now.AddMinutes(5),
-                    signingCredentials: credentials 
+                    signingCredentials: credentials
                 );
 
             return tokenHandler.WriteToken(tokenDescriptor);
